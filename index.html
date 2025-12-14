@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard | Finance Manager</title>
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#f4f6fb;
+}
+header{
+  background:linear-gradient(135deg,#673ab7,#3f51b5);
+  color:#fff;
+  padding:15px;
+  text-align:center;
+}
+header h2{
+  margin:0;
+}
+header small{
+  font-size:13px;
+  opacity:0.9;
+}
+
+.container{
+  padding:20px;
+}
+
+.card{
+  background:#fff;
+  border-radius:15px;
+  padding:20px;
+  margin-bottom:20px;
+  box-shadow:0 6px 15px rgba(0,0,0,0.15);
+}
+
+.card h3{
+  margin-top:0;
+  color:#333;
+}
+
+.btn{
+  display:block;
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  border:none;
+  border-radius:10px;
+  font-size:16px;
+  cursor:pointer;
+  color:#fff;
+}
+
+.income{ background:#4caf50; }
+.expense{ background:#f44336; }
+.emi{ background:#ff9800; }
+.summary{ background:#2196f3; }
+.logout{ background:#9e9e9e; }
+
+.footer{
+  text-align:center;
+  font-size:13px;
+  color:#555;
+  margin-top:30px;
+}
+</style>
+</head>
+
+<body>
+
+<script>
+// 🔐 Login check
+if(sessionStorage.getItem("loggedIn") !== "yes"){
+  window.location.href = "login.html";
+}
+</script>
+
+<header>
+  <h2>💰 Personal Finance Manager</h2>
+  <small>வருமானம் • செலவுகள் • EMI • சுருக்கம்</small>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h3>💰 Income / வருமானம்</h3>
+    <p>Salary & Business income add / edit / export</p>
+    <button class="btn income" onclick="go('income.html')">
+      Go to Income / இன்கம்
+    </button>
+  </div>
+
+  <div class="card">
+    <h3>💸 Expense / செலவுகள்</h3>
+    <p>Gas, EB, Mobile, Rent போன்ற செலவுகள்</p>
+    <button class="btn expense" onclick="go('expense.html')">
+      Go to Expense / எக்ஸ்பென்ஸ்
+    </button>
+  </div>
+
+  <div class="card">
+    <h3>🏦 EMI / Loan</h3>
+    <p>Loan EMI, Remaining months & amount</p>
+    <button class="btn emi" onclick="go('emi.html')">
+      Go to EMI / கடன்
+    </button>
+  </div>
+
+  <div class="card">
+    <h3>📊 Monthly Summary / மாத சுருக்கம்</h3>
+    <p>Income – Expense – EMI balance</p>
+    <button class="btn summary" onclick="go('summary.html')">
+      View Summary / சுருக்கம்
+    </button>
+  </div>
+
+  <div class="card">
+    <button class="btn logout" onclick="logout()">
+      Logout / வெளியேறு
+    </button>
+  </div>
+
+  <div class="footer">
+    Offline • Secure • INR ₹ / SGD $
+  </div>
+
+</div>
+
+<script>
+function go(page){
+  window.location.href = page;
+}
+function logout(){
+  sessionStorage.removeItem("loggedIn");
+  window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

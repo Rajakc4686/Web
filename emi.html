@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMI / Loan | Finance Manager</title>
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg,#ff9800,#ffc107);
+}
+header{
+  background:#f57c00;
+  color:#fff;
+  padding:15px;
+  text-align:center;
+}
+header h2{margin:0;}
+header small{font-size:13px;opacity:0.9;}
+
+.container{padding:15px;}
+label{display:block;margin-top:10px;font-weight:bold;color:#fff;}
+input, select{width:100%; padding:10px; border-radius:8px; border:none; margin-top:5px; font-size:14px;}
+button{margin-top:12px;padding:12px;width:100%;border:none;border-radius:10px;cursor:pointer;font-size:16px;color:#fff;}
+.add-btn{background:#ef6c00;}
+.export-btn{background:#e65100;}
+.back-btn{background:#555;margin-top:20px;}
+table{width:100%;margin-top:15px;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;}
+table th, table td{padding:10px;border-bottom:1px solid #ddd;text-align:left;}
+.edit-btn{background:#fbc02d;color:#000;padding:5px;border-radius:5px;}
+.del-btn{background:#e53935;color:#fff;padding:5px;border-radius:5px;}
+</style>
+</head>
+<body>
+
+<script>
+// 🔐 Login check
+if(sessionStorage.getItem("loggedIn") !== "yes"){
+  window.location.href = "login.html";
+}
+</script>
+
+<header>
+  <h2>🏦 EMI / Loan / கடன்</h2>
+  <small>Add Loan Master & Monthly EMI</small>
+</header>
+
+<div class="container">
+
+  <h3 style="color:#fff;">Loan Master / கடன் முதன்மை</h3>
+  <label>Loan Name / கடன் பெயர்</label>
+  <input type="text" id="loanName" placeholder="Bike / Home">
+
+  <label>Bank / வங்கி</label>
+  <input type="text" id="bank" placeholder="SBI / HDFC">
+
+  <label>EMI Amount / தவணை தொகை</label>
+  <input type="number" id="emiAmount" placeholder="3200">
+
+  <label>Total Months / மொத்த மாதங்கள்</label>
+  <input type="number" id="totalMonths" placeholder="24">
+
+  <button class="add-btn" onclick="addLoanMaster()">➕ Add Loan Master / சேர்க்க</button>
+
+  <h3 style="color:#fff;margin-top:20px;">Monthly EMI Entry / மாத தவணை</h3>
+
+  <label>Month / மாதம்</label>
+  <input type="month" id="month">
+
+  <label>Select Loan / கடன் தேர்வு செய்க</label>
+  <select id="loanSelect"></select>
+
+  <label>EMI Paid Amount / செலுத்திய தொகை</label>
+  <input type="number" id="paidAmount" placeholder="3200">
+
+  <label>Currency / நாணயம்</label>
+  <select id="currency">
+    <option value="INR">INR ₹</option>
+    <option value="SGD">SGD $</option>
+  </select>
+
+  <button class="add-btn" onclick="addEMI()">➕ Add EMI / சேர்க்க</button>
+  <button class="export-btn" onclick="exportCSV()">📤 Export / எக்ஸ்போர்ட்</button>
+  <button class="back-btn" onclick="back()">⬅️ Back to Dashboard</button>
+
+  <table id="emiTable">
+    <thead>
+      <tr>
+        <th>Month / மாதம்</th>
+        <th>Loan Name / கடன் பெயர்</th>
+        <th>Bank / வங்கி</th>
+        <th>EMI Paid / செலுத்திய தொகை</th>
+        <th>Currency</th>
+        <th>Remaining Months / மீதமுள்ள மாதங்கள்</th>
+        <th>Actions / செயல்கள்</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+</div>
+
+<script>
+let loanMaster = JSON.parse(localStorage.getItem("loanMaster")||"[]");
+let emiData = JSON.parse(localStorage.getItem("emiData")||"[]");
+
+function renderLoanSelect(){
+  const sel=document.getElementById("loanSelect");
+  sel.innerHTML="<option>Select Loan / கடன் தேர்வு செய்க</option>";
+  loanMaster.forEach((l,i)=>{
+    sel.innerHTML+=`<option value="${i}">${l.loanName} - ${l.bank}</option>`;
+  });
+}
+
+function addLoanMaster(){
+  const loanName=document.getElementById("loanName").value.trim();
+  const bank=document.getElementById("bank").value.trim();
+  const emiAmount=document.getElementById("emiAmount").value;
+  const totalMonths=document.getElementById("totalMonths").value;
+
+  if(!loanName || !bank || !emiAmount || !totalMonths){ alert("All fields required / எல்லா புலங்களும் நிரப்ப வேண்டும்"); return;}
+
+  loanMaster.push({loanName,bank,emiAmount,totalMonths,remainingMonths:totalMonths});
+  localStorage.setItem("loanMaster",JSON.stringify(loanMaster));
+  renderLoanSelect();
+
+  document.getElementById("loanName").value="";
+  document.getElementById("bank").value="";
+  document.getElementById("emiAmount").value="";
+  document.getElementById("totalMonths").value="";
+}
+
+function addEMI(){
+  const month=document.getElementById("month").value;
+  const loanIndex=document.getElementById("loanSelect").value;
+  const paidAmount=document.getElementById("paidAmount").value;
+  const currency=document.getElementById("currency").value;
+
+  if(!month || loanIndex=="Select Loan / கடன் தேர்வு செய்க" || !paidAmount){ alert("All fields required / எல்லா புலங்களும் நிரப்ப வேண்டும்"); return;}
+
+  const loan=loanMaster[loanIndex];
+  if(loan.remainingMonths<=0){ alert("Loan fully paid / கடன் முடிவடைந்தது"); return;}
+
+  emiData.push({
+    month,loanName:loan.loanName,bank:loan.bank,paidAmount,currency,remainingMonths:loan.remainingMonths-1
+  });
+
+  loan.remainingMonths-=1;
+  localStorage.setItem("loanMaster",JSON.stringify(loanMaster));
+  localStorage.setItem("emiData",JSON.stringify(emiData));
+  renderTable();
+  renderLoanSelect();
+
+  document.getElementById("month").value="";
+  document.getElementById("paidAmount").value="";
+}
+
+function renderTable(){
+  const tbody=document.querySelector("#emiTable tbody");
+  tbody.innerHTML="";
+  emiData.forEach((item,index)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${item.month}</td>
+      <td>${item.loanName}</td>
+      <td>${item.bank}</td>
+      <td>${item.paidAmount}</td>
+      <td>${item.currency}</td>
+      <td>${item.remainingMonths}</td>
+      <td>
+        <button class="edit-btn" onclick="editEMI(${index})">✏️</button>
+        <button class="del-btn" onclick="deleteEMI(${index})">❌</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function editEMI(i){
+  const item=emiData[i];
+  document.getElementById("month").value=item.month;
+  const loanIdx = loanMaster.findIndex(l=>l.loanName===item.loanName && l.bank===item.bank);
+  document.getElementById("loanSelect").value = loanIdx;
+  document.getElementById("paidAmount").value = item.paidAmount;
+  document.getElementById("currency").value = item.currency;
+
+  deleteEMI(i);
+}
+
+function deleteEMI(i){
+  if(confirm("Delete this EMI entry? / EMI பதிவை நீக்குவா?")){
+    const loan = loanMaster.find(l=>l.loanName===emiData[i].loanName && l.bank===emiData[i].bank);
+    loan.remainingMonths+=1;
+    emiData.splice(i,1);
+    localStorage.setItem("loanMaster",JSON.stringify(loanMaster));
+    localStorage.setItem("emiData",JSON.stringify(emiData));
+    renderTable();
+    renderLoanSelect();
+  }
+}
+
+function exportCSV(){
+  if(emiData.length==0){ alert("No data / தரவு இல்லை"); return;}
+  let csv="Month,Loan Name,Bank,EMI Paid,Currency,Remaining Months\n";
+  emiData.forEach(i=>{
+    csv+=`${i.month},${i.loanName},${i.bank},${i.paidAmount},${i.currency},${i.remainingMonths}\n`;
+  });
+  const blob=new Blob([csv],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="EMI.csv";
+  a.click();
+}
+
+function back(){ window.location.href="index.html"; }
+
+renderLoanSelect();
+renderTable();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Summary | Finance Manager</title>
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg,#2196f3,#64b5f6);
+}
+header{
+  background:#1976d2;
+  color:#fff;
+  padding:15px;
+  text-align:center;
+}
+header h2{margin:0;}
+header small{font-size:13px;opacity:0.9;}
+
+.container{padding:15px;}
+
+table{
+  width:100%;
+  margin-top:15px;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:10px;
+  overflow:hidden;
+}
+table th, table td{
+  padding:10px;
+  border-bottom:1px solid #ddd;
+  text-align:left;
+}
+.export-btn{
+  margin-top:12px;
+  padding:12px;
+  width:100%;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:16px;
+  color:#fff;
+  background:#1565c0;
+}
+.back-btn{
+  margin-top:12px;
+  padding:12px;
+  width:100%;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:16px;
+  color:#fff;
+  background:#555;
+}
+</style>
+</head>
+
+<body>
+
+<script>
+// 🔐 Login check
+if(sessionStorage.getItem("loggedIn") !== "yes"){
+  window.location.href = "login.html";
+}
+</script>
+
+<header>
+  <h2>📊 Monthly Summary / மாத சுருக்கம்</h2>
+  <small>Income – Expense – EMI – Balance</small>
+</header>
+
+<div class="container">
+
+  <table id="summaryTable">
+    <thead>
+      <tr>
+        <th>Month / மாதம்</th>
+        <th>Total Income / வருமானம்</th>
+        <th>Total Expense / செலவுகள்</th>
+        <th>Total EMI / தவணை</th>
+        <th>Balance / இருப்பு</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <button class="export-btn" onclick="exportCSV()">📤 Export / எக்ஸ்போர்ட்</button>
+  <button class="back-btn" onclick="back()">⬅️ Back to Dashboard</button>
+</div>
+
+<script>
+let incomeData = JSON.parse(localStorage.getItem("incomeData")||"[]");
+let expenseData = JSON.parse(localStorage.getItem("expenseData")||"[]");
+let emiData = JSON.parse(localStorage.getItem("emiData")||"[]");
+
+// Group by month and calculate totals
+function getSummary(){
+  let summary={};
+  
+  incomeData.forEach(i=>{
+    if(!summary[i.month]) summary[i.month]={income:0,expense:0,emi:0};
+    summary[i.month].income+=parseFloat(i.amount);
+  });
+  
+  expenseData.forEach(i=>{
+    if(!summary[i.month]) summary[i.month]={income:0,expense:0,emi:0};
+    summary[i.month].expense+=parseFloat(i.amount);
+  });
+
+  emiData.forEach(i=>{
+    if(!summary[i.month]) summary[i.month]={income:0,expense:0,emi:0};
+    summary[i.month].emi+=parseFloat(i.paidAmount);
+  });
+
+  return summary;
+}
+
+function renderTable(){
+  const tbody=document.querySelector("#summaryTable tbody");
+  tbody.innerHTML="";
+  const summary=getSummary();
+  Object.keys(summary).sort().forEach(month=>{
+    const data=summary[month];
+    const balance=(data.income - data.expense - data.emi).toFixed(2);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${month}</td>
+      <td>${data.income}</td>
+      <td>${data.expense}</td>
+      <td>${data.emi}</td>
+      <td>${balance}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function exportCSV(){
+  const summary=getSummary();
+  if(Object.keys(summary).length==0){ alert("No data / தரவு இல்லை"); return;}
+  let csv="Month,Total Income,Total Expense,Total EMI,Balance\n";
+  Object.keys(summary).sort().forEach(month=>{
+    const data=summary[month];
+    const balance=(data.income - data.expense - data.emi).toFixed(2);
+    csv+=`${month},${data.income},${data.expense},${data.emi},${balance}\n`;
+  });
+  const blob=new Blob([csv],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="Summary.csv";
+  a.click();
+}
+
+function back(){ window.location.href="index.html"; }
+
+renderTable();
+</script>
+
+</body>
+</html>

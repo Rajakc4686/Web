@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense | Finance Manager</title>
+
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg,#f44336,#e57373);
+}
+header{
+  background:#d32f2f;
+  color:#fff;
+  padding:15px;
+  text-align:center;
+}
+header h2{margin:0;}
+header small{font-size:13px;opacity:0.9;}
+
+.container{
+  padding:15px;
+}
+label{display:block;margin-top:10px;font-weight:bold;color:#fff;}
+input, select{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  margin-top:5px;
+  font-size:14px;
+}
+button{
+  margin-top:12px;
+  padding:12px;
+  width:100%;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:16px;
+  color:#fff;
+}
+.add-btn{background:#c62828;}
+.export-btn{background:#b71c1c;}
+.back-btn{background:#555;margin-top:20px;}
+table{
+  width:100%;
+  margin-top:15px;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:10px;
+  overflow:hidden;
+}
+table th, table td{
+  padding:10px;
+  border-bottom:1px solid #ddd;
+  text-align:left;
+}
+.edit-btn{background:#fbc02d;color:#000;padding:5px;border-radius:5px;}
+.del-btn{background:#e53935;color:#fff;padding:5px;border-radius:5px;}
+.currency-select{margin-top:5px;}
+</style>
+</head>
+
+<body>
+
+<script>
+// 🔐 Login check
+if(sessionStorage.getItem("loggedIn") !== "yes"){
+  window.location.href = "login.html";
+}
+</script>
+
+<header>
+  <h2>💸 Expense / செலவுகள்</h2>
+  <small>Select predefined bills & add monthly expenses</small>
+</header>
+
+<div class="container">
+
+  <label>Month / மாதம்</label>
+  <input type="month" id="month">
+
+  <label>Expense Type / செலவு வகை</label>
+  <select id="expenseType">
+    <option>Gas / எரிபொருள்</option>
+    <option>EB / மின்சாரம்</option>
+    <option>Mobile / மொபைல்</option>
+    <option>Internet / இணையம்</option>
+    <option>House Rent / வீட்டு வாடகை</option>
+    <option>Grocery / கடைசிலைய பொருள்</option>
+    <option>Water / தண்ணீர்</option>
+    <option>Other / பிற</option>
+  </select>
+
+  <label>Description / விளக்கம் (optional)</label>
+  <input type="text" id="desc" placeholder="e.g. Airtel / Other">
+
+  <label>Amount / தொகை</label>
+  <input type="number" id="amount" placeholder="1000">
+
+  <label>Currency / நாணயம்</label>
+  <select id="currency" class="currency-select">
+    <option value="INR">INR ₹</option>
+    <option value="SGD">SGD $</option>
+  </select>
+
+  <button class="add-btn" onclick="addExpense()">➕ Add / சேர்</button>
+  <button class="export-btn" onclick="exportCSV()">📤 Export / எக்ஸ்போர்ட்</button>
+  <button class="back-btn" onclick="back()">⬅️ Back to Dashboard</button>
+
+  <table id="expenseTable">
+    <thead>
+      <tr>
+        <th>Month / மாதம்</th>
+        <th>Type / வகை</th>
+        <th>Description / விளக்கம்</th>
+        <th>Amount / தொகை</th>
+        <th>Currency</th>
+        <th>Actions / செயல்கள்</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+</div>
+
+<script>
+let expenseData = JSON.parse(localStorage.getItem("expenseData")||"[]");
+
+function renderTable(){
+  const tbody = document.querySelector("#expenseTable tbody");
+  tbody.innerHTML="";
+  expenseData.forEach((item,index)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${item.month}</td>
+      <td>${item.type}</td>
+      <td>${item.desc}</td>
+      <td>${item.amount}</td>
+      <td>${item.currency}</td>
+      <td>
+        <button class="edit-btn" onclick="editExpense(${index})">✏️</button>
+        <button class="del-btn" onclick="deleteExpense(${index})">❌</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function addExpense(){
+  const month=document.getElementById("month").value;
+  const type=document.getElementById("expenseType").value;
+  const desc=document.getElementById("desc").value.trim();
+  const amount=document.getElementById("amount").value;
+  const currency=document.getElementById("currency").value;
+
+  if(!month || !amount){ alert("Month and Amount required / மாதம் மற்றும் தொகை நிரப்ப வேண்டும்"); return;}
+
+  expenseData.push({month,type,desc,amount,currency});
+  localStorage.setItem("expenseData",JSON.stringify(expenseData));
+  renderTable();
+
+  document.getElementById("month").value="";
+  document.getElementById("desc").value="";
+  document.getElementById("amount").value="";
+}
+
+function editExpense(i){
+  const item=expenseData[i];
+  document.getElementById("month").value=item.month;
+  document.getElementById("expenseType").value=item.type;
+  document.getElementById("desc").value=item.desc;
+  document.getElementById("amount").value=item.amount;
+  document.getElementById("currency").value=item.currency;
+  deleteExpense(i);
+}
+
+function deleteExpense(i){
+  if(confirm("Delete this entry? / இந்த பதிவை நீக்குவா?")){
+    expenseData.splice(i,1);
+    localStorage.setItem("expenseData",JSON.stringify(expenseData));
+    renderTable();
+  }
+}
+
+function exportCSV(){
+  if(expenseData.length==0){ alert("No data / தரவு இல்லை"); return;}
+  let csv="Month,Type,Description,Amount,Currency\n";
+  expenseData.forEach(i=>{
+    csv+=`${i.month},${i.type},${i.desc},${i.amount},${i.currency}\n`;
+  });
+  const blob=new Blob([csv],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="Expense.csv";
+  a.click();
+}
+
+function back(){
+  window.location.href="index.html";
+}
+
+renderTable();
+</script>
+
+</body>
+</html>
